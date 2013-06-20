@@ -224,7 +224,7 @@
 		    android:background="@drawable/button_pattern"
 		    android:gravity="center"
 		    android:scaleType="centerInside"
-		    android:text="ReadTest" />
+		    android:text="Read Test" />
 	 			
 	 	<EditText
 	 	    android:id="@+id/ReadValues"
@@ -257,7 +257,7 @@
             android:background="@drawable/button_pattern"
             android:gravity="center"
             android:scaleType="centerInside"
-            android:text="Write" />
+            android:text="Write Test" />
 	 			
 	 	<EditText
 	 	    android:id="@+id/WriteValues"

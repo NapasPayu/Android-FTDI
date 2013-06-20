@@ -17,6 +17,8 @@ import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.Toast;
 import android.util.Log;
+import com.UARTLoopback.Globals;
+
 
 import com.UARTLoopback.R.drawable;
 
@@ -188,17 +190,19 @@ public class UARTLoopbackActivity extends Activity {
 			public void onClick(View v) {
 				// TODO Auto-generated method stub
 				// writeButton.setBackgroundResource(drawable.start);
-				if (writeText.length() != 0x00) {
-
+                                if ( true ) { 
+                                    status = uartInterface.WriteTest(10);
+                                } else {
+                                    Log.i( com.UARTLoopback.Globals.LOGSTR,"Writing individual data bytes");
+                                    if (writeText.length() != 0x00) {
 					numBytes = writeText.length();
 					for (count = 0; count < numBytes; count++) {
-						writeBuffer[count] = (byte)writeText.getText().charAt(count);
+                                            writeBuffer[count] = (byte)writeText.getText().charAt(count);
 					}
-
 					status = uartInterface.SendData(numBytes, writeBuffer);
-					
-					//Toast.makeText(global_context, "write status:"+ Integer.toHexString(status), Toast.LENGTH_SHORT).show();
-				}
+					Toast.makeText(global_context, "write status:"+ Integer.toHexString(status), Toast.LENGTH_SHORT).show();
+                                    }
+                                }
 			}
 		});
 

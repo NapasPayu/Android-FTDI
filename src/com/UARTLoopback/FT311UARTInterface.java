@@ -17,6 +17,7 @@ import android.hardware.usb.UsbManager;
 import android.os.ParcelFileDescriptor;
 import android.util.Log;
 import android.widget.Toast;
+import com.UARTLoopback.Globals;
 
 
 /******************************FT311 GPIO interface class******************************************/
@@ -145,6 +146,30 @@ public class FT311UARTInterface extends Activity
 
 		return status;
 	}
+
+        /* write data loop test */
+        public byte WriteTest(int numseconds )
+        {
+            byte status = 0x0;
+            int counter = 0;
+            int numbytes = 256;
+            Log.e("FOOBAR","Do something darn it !");
+            Log.i(com.UARTLoopback.Globals.LOGSTR,"Long write test");
+            while ( true ) { 
+                counter ++;
+                for( int i = 0; i < 256; i ++ ) { 
+                    // SendPacket( i );
+                    writeusbdata[i] = (byte)i;
+                }
+                SendPacket(numbytes);
+                Log.i(com.UARTLoopback.Globals.LOGSTR,"After writing bytes");
+
+                if( counter > 1000 )
+                    break;
+            }
+            Toast.makeText(global_context, "Completed Write Test", Toast.LENGTH_SHORT).show();
+            return status;
+        }
 
 	/*read data*/
 	public byte ReadData(int numBytes,byte[] buffer, int [] actualNumBytes)
