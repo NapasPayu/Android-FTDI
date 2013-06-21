@@ -40,6 +40,9 @@
 		<item>None</item>        
 		<item>CTS/RTS</item>
 	</string-array>
+	<string name="running_test">Running / Stop</string>
+	<string name="read_test">Read Test</string>
+	<string name="write_test">Write Test</string>
 </resources>
 
 

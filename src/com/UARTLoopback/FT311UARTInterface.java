@@ -147,26 +147,41 @@ public class FT311UARTInterface extends Activity
 		return status;
 	}
 
+        private class write_thread  extends Thread { 
+                int counter;
+                int numbytes = 256;
+                public write_thread( int numseconds) { 
+                }
+                public write_thread() { 
+
+                }
+                public void run() { 
+                    Log.i(com.UARTLoopback.Globals.LOGSTR,"Starting write test");
+                    while ( true ) { 
+                        counter ++;
+                        for( int i = 0; i < 256; i ++ ) { 
+                            // SendPacket( i );
+                            writeusbdata[i] = (byte)i;
+                        }
+                        SendPacket(numbytes);
+                        Log.i(com.UARTLoopback.Globals.LOGSTR,"After writing bytes");
+                        
+                        if( counter > 10 )
+                            break;
+                    }
+                }
+        }
+
         /* write data loop test */
         public byte WriteTest(int numseconds )
         {
             byte status = 0x0;
             int counter = 0;
-            int numbytes = 256;
+
+            write_thread  DoIt = new write_thread();
             Log.e("FOOBAR","Do something darn it !");
             Log.i(com.UARTLoopback.Globals.LOGSTR,"Long write test");
-            while ( true ) { 
-                counter ++;
-                for( int i = 0; i < 256; i ++ ) { 
-                    // SendPacket( i );
-                    writeusbdata[i] = (byte)i;
-                }
-                SendPacket(numbytes);
-                Log.i(com.UARTLoopback.Globals.LOGSTR,"After writing bytes");
 
-                if( counter > 1000 )
-                    break;
-            }
             Toast.makeText(global_context, "Completed Write Test", Toast.LENGTH_SHORT).show();
             return status;
         }

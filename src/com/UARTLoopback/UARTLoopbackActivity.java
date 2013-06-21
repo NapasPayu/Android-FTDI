@@ -51,6 +51,9 @@ public class UARTLoopbackActivity extends Activity {
 	byte status;
 	byte writeIndex = 0;
 	byte readIndex = 0;
+        
+        boolean writing = false;
+        boolean reading = false;
 
 	int baudRate; /* baud rate */
 	byte stopBit; /* 1:1stop bits, 2:2 stop bits */
@@ -190,17 +193,30 @@ public class UARTLoopbackActivity extends Activity {
 			public void onClick(View v) {
 				// TODO Auto-generated method stub
 				// writeButton.setBackgroundResource(drawable.start);
-                                if ( true ) { 
-                                    status = uartInterface.WriteTest(10);
+                                if( writing )  { 
+                                    writeButton.setBackgroundResource( R.drawable.button_pattern);
+                                    writing = false;
+                                    writeButton.setText( R.string.write_test );
                                 } else {
-                                    Log.i( com.UARTLoopback.Globals.LOGSTR,"Writing individual data bytes");
-                                    if (writeText.length() != 0x00) {
-					numBytes = writeText.length();
-					for (count = 0; count < numBytes; count++) {
-                                            writeBuffer[count] = (byte)writeText.getText().charAt(count);
-					}
-					status = uartInterface.SendData(numBytes, writeBuffer);
-					Toast.makeText(global_context, "write status:"+ Integer.toHexString(status), Toast.LENGTH_SHORT).show();
+
+                                    if ( true ) { 
+                                        // Button writeButton = (Button) findViewById(R.id.WriteButton);
+                                        
+                                        writing = true;
+                                        // First change the color of the Button
+                                        writeButton.setBackgroundResource( R.drawable.button_pattern_running);
+                                        writeButton.setText( R.string.running_test );
+                                        status = uartInterface.WriteTest(10);
+                                    } else {
+                                        Log.i( com.UARTLoopback.Globals.LOGSTR,"Writing individual data bytes");
+                                        if (writeText.length() != 0x00) {
+                                            numBytes = writeText.length();
+                                            for (count = 0; count < numBytes; count++) {
+                                                writeBuffer[count] = (byte)writeText.getText().charAt(count);
+                                            }
+                                            status = uartInterface.SendData(numBytes, writeBuffer);
+                                            Toast.makeText(global_context, "write status:"+ Integer.toHexString(status), Toast.LENGTH_SHORT).show();
+                                        }
                                     }
                                 }
 			}
