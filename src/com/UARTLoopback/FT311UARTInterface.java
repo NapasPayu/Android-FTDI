@@ -36,8 +36,8 @@ public class FT311UARTInterface extends Activity
         public Thread writeThread;
 
 
-	private byte [] usbdata; 
-	private byte []	writeusbdata;
+	private byte [] read_usb_data; 
+	private byte []	write_usb_data;
 	private byte  [] readBuffer; /*circular buffer*/
 	private int readcount;
 	private int totalBytes;
@@ -68,8 +68,8 @@ public class FT311UARTInterface extends Activity
 		global_context = context;
 		intsharePrefSettings = sharePrefSettings;
 		/*shall we start a thread here or what*/
-		usbdata = new byte[1024]; 
-		writeusbdata = new byte[256];
+		read_usb_data = new byte[1024]; 
+		write_usb_data = new byte[256];
 		/*128(make it 256, but looks like bytes should be enough)*/
 		readBuffer = new byte [maxnumbytes];
 
@@ -93,19 +93,19 @@ public class FT311UARTInterface extends Activity
 	public void SetConfig(int baud, byte dataBits, byte stopBits,byte parity, byte flowControl) {
 
 		/*prepare the baud rate buffer*/
-		writeusbdata[0] = (byte)baud;
-		writeusbdata[1] = (byte)(baud >> 8);
-		writeusbdata[2] = (byte)(baud >> 16);
-		writeusbdata[3] = (byte)(baud >> 24);
+		write_usb_data[0] = (byte)baud;
+		write_usb_data[1] = (byte)(baud >> 8);
+		write_usb_data[2] = (byte)(baud >> 16);
+		write_usb_data[3] = (byte)(baud >> 24);
 
 		/*data bits*/
-		writeusbdata[4] = dataBits;
+		write_usb_data[4] = dataBits;
 		/*stop bits*/
-		writeusbdata[5] = stopBits;
+		write_usb_data[5] = stopBits;
 		/*parity*/
-		writeusbdata[6] = parity;
+		write_usb_data[6] = parity;
 		/*flow control*/
-		writeusbdata[7] = flowControl;
+		write_usb_data[7] = flowControl;
 
 		/*send the UART configuration packet*/
 		SendPacket((int)8);
@@ -129,15 +129,15 @@ public class FT311UARTInterface extends Activity
 
 		/*prepare the packet to be sent*/
 		for(int count = 0;count<numBytes;count++) {	
-			writeusbdata[count] = buffer[count];
+			write_usb_data[count] = buffer[count];
 		}
 
 		if (numBytes != 64) {
 			SendPacket(numBytes);
 		} else {
-			byte temp = writeusbdata[63];
+			byte temp = write_usb_data[63];
 			SendPacket(63);
-			writeusbdata[0] = temp;
+			write_usb_data[0] = temp;
 			SendPacket(1);
 		}
 
@@ -159,7 +159,7 @@ public class FT311UARTInterface extends Activity
                             counter ++;
                             for( int i = 0; i < 256; i ++ ) { 
 
-                                writeusbdata[i] = (byte)i;
+                                write_usb_data[i] = (byte)i;
                             }
                             Thread.sleep(1);
                             SendPacket(numbytes);
@@ -249,7 +249,7 @@ public class FT311UARTInterface extends Activity
 	{	
 		try {
 			if (outputstream != null){
-				outputstream.write(writeusbdata, 0,numBytes);
+				outputstream.write(write_usb_data, 0,numBytes);
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -317,7 +317,7 @@ public class FT311UARTInterface extends Activity
 
 		if (true == bConfiged) {
 			READ_ENABLE = false;  // set false condition for handler_thread to exit waiting data loop
-			writeusbdata[0] = 0;  // send dummy data for instream.read going
+			write_usb_data[0] = 0;  // send dummy data for instream.read going
 			SendPacket(1);
 		} else {
 			SetConfig(9600,(byte)1,(byte)8,(byte)0,(byte)0);  // send default setting data for config
@@ -325,7 +325,7 @@ public class FT311UARTInterface extends Activity
 			catch(Exception e){}
 
 			READ_ENABLE = false;  // set false condition for handler_thread to exit waiting data loop
-			writeusbdata[0] = 0;  // send dummy data for instream.read going
+			write_usb_data[0] = 0;  // send dummy data for instream.read going
 			SendPacket(1);
 			if (true == accessory_attached) {
                             saveDefaultPreference();
@@ -466,10 +466,10 @@ public class FT311UARTInterface extends Activity
 
 				try {
                                     if (instream != null) {	
-                                        readcount = instream.read(usbdata,0,1024);
+                                        readcount = instream.read(read_usb_data,0,1024);
                                         if (readcount > 0) {
                                             for(int count = 0;count<readcount;count++) {					    			
-                                                readBuffer[writeIndex] = usbdata[count];
+                                                readBuffer[writeIndex] = read_usb_data[count];
                                                 writeIndex++;
                                                 writeIndex %= maxnumbytes;
                                             }
