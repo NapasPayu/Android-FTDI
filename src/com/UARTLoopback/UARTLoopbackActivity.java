@@ -200,30 +200,15 @@ public class UARTLoopbackActivity extends Activity {
                                     writeButton.setText( R.string.write_test );
                                     uartInterface.EndWriteTest();
                                 } else {
-
-                                    if ( true ) { 
-                                        // Button writeButton = (Button) findViewById(R.id.WriteButton);
-                                        
                                         writing = true;
                                         // First change the color of the Button
                                         writeButton.setBackgroundResource( R.drawable.button_pattern_running);
                                         writeButton.setText( R.string.running_test );
                                         status = uartInterface.WriteTest(10);
-                                    } else {
-                                        Log.i( com.UARTLoopback.Globals.LOGSTR,"Writing individual data bytes");
-                                        if (writeText.length() != 0x00) {
-                                            numBytes = writeText.length();
-                                            for (count = 0; count < numBytes; count++) {
-                                                writeBuffer[count] = (byte)writeText.getText().charAt(count);
-                                            }
-                                            status = uartInterface.SendData(numBytes, writeBuffer);
-                                            Toast.makeText(global_context, "write status:"+ Integer.toHexString(status), Toast.LENGTH_SHORT).show();
-                                        }
-                                    }
                                 }
-			}
-		});
+                        }
 
+                    });
 		uartInterface = new FT311UARTInterface(this, sharePrefSettings);
 
 		getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
@@ -232,6 +217,19 @@ public class UARTLoopbackActivity extends Activity {
 		handlerThread.start();
 
 	}
+
+// else {
+//                                         Log.i( com.UARTLoopback.Globals.LOGSTR,"Writing individual data bytes");
+//                                         if (writeText.length() != 0x00) {
+//                                             numBytes = writeText.length();
+//                                             for (count = 0; count < numBytes; count++) {
+//                                                 writeBuffer[count] = (byte)writeText.getText().charAt(count);
+//                                             }
+//                                             status = uartInterface.SendData(numBytes, writeBuffer);
+//                                             Toast.makeText(global_context, "write status:"+ Integer.toHexString(status), Toast.LENGTH_SHORT).show();
+//                                         }
+//                                     }
+
 	
 	protected void cleanPreference(){
 		SharedPreferences.Editor editor = sharePrefSettings.edit();

@@ -33,6 +33,8 @@ public class FT311UARTInterface extends Activity
 	public FileOutputStream outputstream = null;
 	public boolean mPermissionRequestPending = false;
 	public read_thread readThread;
+        public Thread writeThread;
+
 
 	private byte [] usbdata; 
 	private byte []	writeusbdata;
@@ -42,7 +44,8 @@ public class FT311UARTInterface extends Activity
 	private int writeIndex;
 	private int readIndex;
 	private byte status;
-        private write_thread writing_test;
+        // private write_thread writing_test;
+
 
 	final int  maxnumbytes = 65536;
 
@@ -149,27 +152,31 @@ public class FT311UARTInterface extends Activity
 		return status;
 	}
 
-        private class write_thread  extends Thread { 
+        private class write_runnable implements Runnable { 
                 int counter;
                 int numbytes = 256;
                 boolean running = true;
-                public write_thread( int numseconds) { 
+                public write_runnable( int numseconds) { 
                 }
-                public write_thread() { 
+                public write_runnable() { 
                 }
                 public void run() { 
                     Log.i(com.UARTLoopback.Globals.LOGSTR,"Starting write test");
-                    while ( running  ) { 
-                        counter ++;
-                        for( int i = 0; i < 256; i ++ ) { 
-                            // SendPacket( i );
-                            writeusbdata[i] = (byte)i;
+                    while ( !Thread.currentThread().isInterrupted() && running ) { 
+                        try {
+                            counter ++;
+                            for( int i = 0; i < 256; i ++ ) { 
+
+                                writeusbdata[i] = (byte)i;
+                            }
+                            Thread.sleep(1);
+                            SendPacket(numbytes);
+                            Log.i(com.UARTLoopback.Globals.LOGSTR,"After writing bytes");
+
+                        } catch (InterruptedException e) {
+                            System.out.println("Exception" +  e);
+                            running = false;
                         }
-                        SendPacket(numbytes);
-                        Log.i(com.UARTLoopback.Globals.LOGSTR,"After writing bytes");
-                        
-                        if( counter > 10 )
-                            break;
                     }
                     Log.i(com.UARTLoopback.Globals.LOGSTR,"Thread is done...");
                 }
@@ -181,28 +188,32 @@ public class FT311UARTInterface extends Activity
             byte status = 0x0;
             int counter = 0;
 
-            writing_test = new write_thread();
-            Log.e("FOOBAR","Do something darn it !");
+            // writingThread = new Thread( new write_runnable() );
+            write_runnable runnable    = new write_runnable();
+            writeThread = new Thread( runnable  );
+
             Log.i(com.UARTLoopback.Globals.LOGSTR,"Long write test");
 
             // Fire off the long running thread
-            writing_test.run();
-
+            writeThread.start();
 
             Toast.makeText(global_context, "Write Test Started", Toast.LENGTH_SHORT).show();
             return status;
         }
+
+
+
         public void EndWriteTest() 
         {
-            writing_test.running = false;
             Log.i(com.UARTLoopback.Globals.LOGSTR,"Signaling for the thread to end");
-            // while( writing_test.getState() !=Thread.State.TERMINATED) { 
+            try {
+                writeThread.interrupt();
                 Log.i(com.UARTLoopback.Globals.LOGSTR,"Waiting for the thread to terminate");
-                try { 
-                    writing_test.join();
-                } catch( InterruptedException e ) {
-                }
-            // }
+                writeThread.join();
+            } catch ( InterruptedException e ) {
+                System.out.println("Error: " + e );
+            }
+
             Log.i(com.UARTLoopback.Globals.LOGSTR,"Doing something else here");
             Toast.makeText(global_context, "Write Test Completed", Toast.LENGTH_SHORT).show();
         }
