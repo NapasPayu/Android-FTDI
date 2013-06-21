@@ -38,7 +38,7 @@ public class UARTLoopbackActivity extends Activity {
 	Spinner paritySpinner;
 	Spinner flowSpinner;
 
-	Button writeButton, configButton, readButton;
+        Button writeButton, configButton, readButton , resetButton;
 
 	/* local variables */
 	byte[] writeBuffer;
@@ -80,11 +80,14 @@ public class UARTLoopbackActivity extends Activity {
 		writeText = (EditText) findViewById(R.id.WriteValues);
 		//writeText.setMovementMethod(ScrollingMovementMethod.getInstance());
 
+
 		global_context = this;
 
 		configButton = (Button) findViewById(R.id.configButton);
 		writeButton = (Button) findViewById(R.id.WriteButton);
                 readButton = (Button) findViewById( R.id.ReadButton );
+                resetButton = (Button) findViewById(R.id.ResetButton);
+
 
 		originalDrawable = configButton.getBackground();
 
@@ -173,7 +176,7 @@ public class UARTLoopbackActivity extends Activity {
 				// TODO Auto-generated method stub
 				// configButton.setBackgroundResource(drawable.start);
 				
-				if(false == bConfiged){
+				if( bConfiged == false ){
 					bConfiged = true;
 					uartInterface.SetConfig(baudRate, dataBit, stopBit, parity, flowControl);
 					savePreference();
@@ -186,6 +189,21 @@ public class UARTLoopbackActivity extends Activity {
 			}
 
 		});
+
+
+                resetButton.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                            public void onClick(View v) {
+                            bConfiged = false;
+                            // configButton.setBackground(originalDrawable);
+                            configButton.setBackgroundResource(R.drawable.button_pattern);
+                            uartInterface.SetConfig(9600, (byte)8, (byte)1, (byte)0, (byte)0);
+                            savePreference();
+                            // uartInterface = new FT311UARTInterface(this, sharePrefSettings);
+                        }
+                });
+
+
 
 		/* handle write click */
 		writeButton.setOnClickListener(new View.OnClickListener() {
@@ -209,6 +227,23 @@ public class UARTLoopbackActivity extends Activity {
                         }
 
                     });
+
+                readButton.setOnClickListener( new View.OnClickListener() { 
+                            @Override
+                            public void onClick( View v ) { 
+                                if( reading ) {
+                                    readButton.setBackgroundResource( R.drawable.button_pattern);
+                                    reading = false;
+                                    readButton.setText( R.string.read_test );
+                                    
+                                } else {
+                                    reading = true;
+                                    readButton.setBackgroundResource( R.drawable.button_pattern_running);
+                                    readButton.setText( R.string.running_test );
+                                }
+                            }
+                    });
+
 		uartInterface = new FT311UARTInterface(this, sharePrefSettings);
 
 		getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
@@ -217,19 +252,6 @@ public class UARTLoopbackActivity extends Activity {
 		handlerThread.start();
 
 	}
-
-// else {
-//                                         Log.i( com.UARTLoopback.Globals.LOGSTR,"Writing individual data bytes");
-//                                         if (writeText.length() != 0x00) {
-//                                             numBytes = writeText.length();
-//                                             for (count = 0; count < numBytes; count++) {
-//                                                 writeBuffer[count] = (byte)writeText.getText().charAt(count);
-//                                             }
-//                                             status = uartInterface.SendData(numBytes, writeBuffer);
-//                                             Toast.makeText(global_context, "write status:"+ Integer.toHexString(status), Toast.LENGTH_SHORT).show();
-//                                         }
-//                                     }
-
 	
 	protected void cleanPreference(){
 		SharedPreferences.Editor editor = sharePrefSettings.edit();

@@ -90,9 +90,7 @@ public class FT311UARTInterface extends Activity
 	}
 
 
-	public void SetConfig(int baud, byte dataBits, byte stopBits,
-			byte parity, byte flowControl)
-	{
+	public void SetConfig(int baud, byte dataBits, byte stopBits,byte parity, byte flowControl) {
 
 		/*prepare the baud rate buffer*/
 		writeusbdata[0] = (byte)baud;
@@ -115,34 +113,28 @@ public class FT311UARTInterface extends Activity
 
 
 	/*write data*/
-	public byte SendData(int numBytes, byte[] buffer) 
-	{
+	public byte SendData(int numBytes, byte[] buffer) {
 		status = 0x00; /*success by default*/
 		/*
 		 * if num bytes are more than maximum limit
 		 */
-		if(numBytes < 1){
+		if (numBytes < 1) {
 			/*return the status with the error in the command*/
 			return status;
 		}
-
 		/*check for maximum limit*/
-		if(numBytes > 256){
+		if (numBytes > 256) {
 			numBytes = 256;
 		}
 
 		/*prepare the packet to be sent*/
-		for(int count = 0;count<numBytes;count++)
-		{	
+		for(int count = 0;count<numBytes;count++) {	
 			writeusbdata[count] = buffer[count];
 		}
 
-		if(numBytes != 64)
-		{
+		if (numBytes != 64) {
 			SendPacket(numBytes);
-		}
-		else
-		{
+		} else {
 			byte temp = writeusbdata[63];
 			SendPacket(63);
 			writeusbdata[0] = temp;
@@ -220,19 +212,19 @@ public class FT311UARTInterface extends Activity
         
 
 	/*read data*/
-	public byte ReadData(int numBytes,byte[] buffer, int [] actualNumBytes)
-	{
+	public byte ReadData(int numBytes,byte[] buffer, int [] actualNumBytes) 
+        {
 		status = 0x00; /*success by default*/
 
 		/*should be at least one byte to read*/
-		if((numBytes < 1) || (totalBytes == 0)){
+		if ((numBytes < 1) || (totalBytes == 0)){
 			actualNumBytes[0] = 0;
 			status = 0x01;
 			return status;
 		}
 
 		/*check for max limit*/
-		if(numBytes > totalBytes)
+		if (numBytes > totalBytes)
 			numBytes = totalBytes;
 
 		/*update the number of bytes available*/
@@ -241,8 +233,7 @@ public class FT311UARTInterface extends Activity
 		actualNumBytes[0] = numBytes;	
 
 		/*copy to the user buffer*/	
-		for(int count = 0; count<numBytes;count++)
-		{
+		for(int count = 0; count<numBytes;count++) {
 			buffer[count] = readBuffer[readIndex];
 			readIndex++;
 			/*shouldnt read more than what is there in the buffer,
@@ -257,7 +248,7 @@ public class FT311UARTInterface extends Activity
 	private void SendPacket(int numBytes)
 	{	
 		try {
-			if(outputstream != null){
+			if (outputstream != null){
 				outputstream.write(writeusbdata, 0,numBytes);
 			}
 		} catch (IOException e) {
@@ -274,12 +265,10 @@ public class FT311UARTInterface extends Activity
 		}
 
 		UsbAccessory[] accessories = usbmanager.getAccessoryList();
-		if(accessories != null)
-		{
+		if (accessories != null) {
 			Toast.makeText(global_context, "Accessory Attached", Toast.LENGTH_SHORT).show();
 		}
-		else
-		{
+		else {
 			// return 2 for accessory detached case
 			//Log.e(">>@@","ResumeAccessory RETURN 2 (accessories == null)");
 			accessory_attached = false;
@@ -288,20 +277,17 @@ public class FT311UARTInterface extends Activity
 
 		UsbAccessory accessory = (accessories == null ? null : accessories[0]);
 		if (accessory != null) {
-			if( -1 == accessory.toString().indexOf(ManufacturerString))
-			{
+			if ( -1 == accessory.toString().indexOf(ManufacturerString)) {
 				Toast.makeText(global_context, "Manufacturer is not matched!", Toast.LENGTH_SHORT).show();
 				return 1;
 			}
 
-			if( -1 == accessory.toString().indexOf(ModelString1) && -1 == accessory.toString().indexOf(ModelString2))
-			{
+			if ( -1 == accessory.toString().indexOf(ModelString1) && -1 == accessory.toString().indexOf(ModelString2)) {
 				Toast.makeText(global_context, "Model is not matched!", Toast.LENGTH_SHORT).show();
 				return 1;
 			}
 
-			if( -1 == accessory.toString().indexOf(VersionString))
-			{
+			if ( -1 == accessory.toString().indexOf(VersionString)) {
 				Toast.makeText(global_context, "Version is not matched!", Toast.LENGTH_SHORT).show();
 				return 1;
 			}
@@ -311,9 +297,7 @@ public class FT311UARTInterface extends Activity
 
 			if (usbmanager.hasPermission(accessory)) {
 				OpenAccessory(accessory);
-			} 
-			else
-			{
+			} else {
 				synchronized (mUsbReceiver) {
 					if (!mPermissionRequestPending) {
 						Toast.makeText(global_context, "Request USB Permission", Toast.LENGTH_SHORT).show();
@@ -331,13 +315,11 @@ public class FT311UARTInterface extends Activity
 	/*destroy accessory*/
 	public void DestroyAccessory(boolean bConfiged) {
 
-		if(true == bConfiged){
+		if (true == bConfiged) {
 			READ_ENABLE = false;  // set false condition for handler_thread to exit waiting data loop
 			writeusbdata[0] = 0;  // send dummy data for instream.read going
 			SendPacket(1);
-		}
-		else
-		{
+		} else {
 			SetConfig(9600,(byte)1,(byte)8,(byte)0,(byte)0);  // send default setting data for config
 			try{Thread.sleep(10);}
 			catch(Exception e){}
@@ -345,14 +327,15 @@ public class FT311UARTInterface extends Activity
 			READ_ENABLE = false;  // set false condition for handler_thread to exit waiting data loop
 			writeusbdata[0] = 0;  // send dummy data for instream.read going
 			SendPacket(1);
-			if(true == accessory_attached)
-			{
-				saveDefaultPreference();
+			if (true == accessory_attached) {
+                            saveDefaultPreference();
 			}
 		}
 
-		try{Thread.sleep(10);}
-		catch(Exception e){}			
+		try{
+                    Thread.sleep(10);
+                } catch(Exception e){
+                }			
 		CloseAccessory();
 	}
 
@@ -361,7 +344,7 @@ public class FT311UARTInterface extends Activity
 	public void OpenAccessory(UsbAccessory accessory)
 	{
 		filedescriptor = usbmanager.openAccessory(accessory);
-		if(filedescriptor != null){
+		if (filedescriptor != null){
 			usbaccessory = accessory;
 
 			FileDescriptor fd = filedescriptor.getFileDescriptor();
@@ -369,11 +352,11 @@ public class FT311UARTInterface extends Activity
 			inputstream = new FileInputStream(fd);
 			outputstream = new FileOutputStream(fd);
 			/*check if any of them are null*/
-			if(inputstream == null || outputstream==null){
+			if (inputstream == null || outputstream==null){
 				return;
 			}
 
-			if(READ_ENABLE == false){
+			if (READ_ENABLE == false){
 				READ_ENABLE = true;
 				readThread = new read_thread(inputstream);
 				readThread.start();
@@ -384,18 +367,18 @@ public class FT311UARTInterface extends Activity
 	private void CloseAccessory()
 	{
 		try{
-			if(filedescriptor != null)
+			if (filedescriptor != null)
 				filedescriptor.close();
 
 		}catch (IOException e){}
 
 		try {
-			if(inputstream != null)
+			if (inputstream != null)
 				inputstream.close();
 		} catch(IOException e){}
 
 		try {
-			if(outputstream != null)
+			if (outputstream != null)
 				outputstream.close();
 
 		}catch(IOException e){}
@@ -409,7 +392,7 @@ public class FT311UARTInterface extends Activity
 	}
 
 	protected void saveDetachPreference() {
-		if(intsharePrefSettings != null)
+		if (intsharePrefSettings != null)
 		{
 			intsharePrefSettings.edit()
 			.putString("configed", "FALSE")
@@ -418,7 +401,7 @@ public class FT311UARTInterface extends Activity
 	}
 
 	protected void saveDefaultPreference() {
-		if(intsharePrefSettings != null)
+		if (intsharePrefSettings != null)
 		{
 			intsharePrefSettings.edit().putString("configed", "TRUE").commit();
 			intsharePrefSettings.edit().putInt("baudRate", 9600).commit();
@@ -430,16 +413,12 @@ public class FT311UARTInterface extends Activity
 	}
 
 	/***********USB broadcast receiver*******************************************/
-	private final BroadcastReceiver mUsbReceiver = new BroadcastReceiver() 
-	{
+	private final BroadcastReceiver mUsbReceiver = new BroadcastReceiver() {
 		@Override
-		public void onReceive(Context context, Intent intent) 
-		{
+		public void onReceive(Context context, Intent intent) {
 			String action = intent.getAction();
-			if (ACTION_USB_PERMISSION.equals(action)) 
-			{
-				synchronized (this)
-				{
+			if (ACTION_USB_PERMISSION.equals(action)) {
+				synchronized (this) {
 					UsbAccessory accessory = (UsbAccessory) intent.getParcelableExtra(UsbManager.EXTRA_ACCESSORY);
 					if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false))
 					{
@@ -468,8 +447,7 @@ public class FT311UARTInterface extends Activity
 	};
 
 	/*usb input data handler*/
-	private class read_thread  extends Thread 
-	{
+	private class read_thread  extends Thread {
 		FileInputStream instream;
 
 		read_thread(FileInputStream stream ){
@@ -477,41 +455,33 @@ public class FT311UARTInterface extends Activity
 			this.setPriority(Thread.MAX_PRIORITY);
 		}
 
-		public void run()
-		{		
-			while(READ_ENABLE == true)
-			{
-				while(totalBytes > (maxnumbytes - 1024))
-				{
-					try 
-					{
+		public void run() {		
+			while(READ_ENABLE == true) {
+				while(totalBytes > (maxnumbytes - 1024)) {
+					try {
 						Thread.sleep(50);
 					}
 					catch (InterruptedException e) {e.printStackTrace();}
 				}
 
-				try
-				{
-					if(instream != null)
-					{	
-						readcount = instream.read(usbdata,0,1024);
-						if(readcount > 0)
-						{
-							for(int count = 0;count<readcount;count++)
-							{					    			
-								readBuffer[writeIndex] = usbdata[count];
-								writeIndex++;
-								writeIndex %= maxnumbytes;
-							}
-
-							if(writeIndex >= readIndex)
-								totalBytes = writeIndex-readIndex;
-							else
-								totalBytes = (maxnumbytes-readIndex)+writeIndex;
-
-//					    		Log.e(">>@@","totalBytes:"+totalBytes);
-						}
-					}
+				try {
+                                    if (instream != null) {	
+                                        readcount = instream.read(usbdata,0,1024);
+                                        if (readcount > 0) {
+                                            for(int count = 0;count<readcount;count++) {					    			
+                                                readBuffer[writeIndex] = usbdata[count];
+                                                writeIndex++;
+                                                writeIndex %= maxnumbytes;
+                                            }
+                                            
+                                            if (writeIndex >= readIndex)
+                                                totalBytes = writeIndex-readIndex;
+                                            else
+                                                totalBytes = (maxnumbytes-readIndex)+writeIndex;
+                                            
+                                            Log.e(">>@@","totalBytes:"+totalBytes);
+                                        }
+                                    }
 				}
 				catch (IOException e){e.printStackTrace();}
 			}
