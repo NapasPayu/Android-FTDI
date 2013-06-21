@@ -38,7 +38,7 @@ public class UARTLoopbackActivity extends Activity {
 	Spinner paritySpinner;
 	Spinner flowSpinner;
 
-	Button writeButton, configButton;
+	Button writeButton, configButton, readButton;
 
 	/* local variables */
 	byte[] writeBuffer;
@@ -84,7 +84,8 @@ public class UARTLoopbackActivity extends Activity {
 
 		configButton = (Button) findViewById(R.id.configButton);
 		writeButton = (Button) findViewById(R.id.WriteButton);
-		
+                readButton = (Button) findViewById( R.id.ReadButton );
+
 		originalDrawable = configButton.getBackground();
 
 		/* allocate buffer */
@@ -197,6 +198,7 @@ public class UARTLoopbackActivity extends Activity {
                                     writeButton.setBackgroundResource( R.drawable.button_pattern);
                                     writing = false;
                                     writeButton.setText( R.string.write_test );
+                                    uartInterface.EndWriteTest();
                                 } else {
 
                                     if ( true ) { 

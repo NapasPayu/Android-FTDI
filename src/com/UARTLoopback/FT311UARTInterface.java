@@ -42,6 +42,8 @@ public class FT311UARTInterface extends Activity
 	private int writeIndex;
 	private int readIndex;
 	private byte status;
+        private write_thread writing_test;
+
 	final int  maxnumbytes = 65536;
 
 	public boolean datareceived = false;
@@ -150,14 +152,14 @@ public class FT311UARTInterface extends Activity
         private class write_thread  extends Thread { 
                 int counter;
                 int numbytes = 256;
+                boolean running = true;
                 public write_thread( int numseconds) { 
                 }
                 public write_thread() { 
-
                 }
                 public void run() { 
                     Log.i(com.UARTLoopback.Globals.LOGSTR,"Starting write test");
-                    while ( true ) { 
+                    while ( running  ) { 
                         counter ++;
                         for( int i = 0; i < 256; i ++ ) { 
                             // SendPacket( i );
@@ -169,6 +171,7 @@ public class FT311UARTInterface extends Activity
                         if( counter > 10 )
                             break;
                     }
+                    Log.i(com.UARTLoopback.Globals.LOGSTR,"Thread is done...");
                 }
         }
 
@@ -178,13 +181,32 @@ public class FT311UARTInterface extends Activity
             byte status = 0x0;
             int counter = 0;
 
-            write_thread  DoIt = new write_thread();
+            writing_test = new write_thread();
             Log.e("FOOBAR","Do something darn it !");
             Log.i(com.UARTLoopback.Globals.LOGSTR,"Long write test");
 
-            Toast.makeText(global_context, "Completed Write Test", Toast.LENGTH_SHORT).show();
+            // Fire off the long running thread
+            writing_test.run();
+
+
+            Toast.makeText(global_context, "Write Test Started", Toast.LENGTH_SHORT).show();
             return status;
         }
+        public void EndWriteTest() 
+        {
+            writing_test.running = false;
+            Log.i(com.UARTLoopback.Globals.LOGSTR,"Signaling for the thread to end");
+            // while( writing_test.getState() !=Thread.State.TERMINATED) { 
+                Log.i(com.UARTLoopback.Globals.LOGSTR,"Waiting for the thread to terminate");
+                try { 
+                    writing_test.join();
+                } catch( InterruptedException e ) {
+                }
+            // }
+            Log.i(com.UARTLoopback.Globals.LOGSTR,"Doing something else here");
+            Toast.makeText(global_context, "Write Test Completed", Toast.LENGTH_SHORT).show();
+        }
+        
 
 	/*read data*/
 	public byte ReadData(int numBytes,byte[] buffer, int [] actualNumBytes)
@@ -296,7 +318,7 @@ public class FT311UARTInterface extends Activity
 	}
 
 	/*destroy accessory*/
-	public void DestroyAccessory(boolean bConfiged){
+	public void DestroyAccessory(boolean bConfiged) {
 
 		if(true == bConfiged){
 			READ_ENABLE = false;  // set false condition for handler_thread to exit waiting data loop
