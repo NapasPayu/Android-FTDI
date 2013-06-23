@@ -235,11 +235,13 @@ public class UARTLoopbackActivity extends Activity {
                                     readButton.setBackgroundResource( R.drawable.button_pattern);
                                     reading = false;
                                     readButton.setText( R.string.read_test );
-                                    
+                                    handlerThread.update_display = false;
+                                    handlerThread.byte_count = 0;
                                 } else {
                                     reading = true;
                                     readButton.setBackgroundResource( R.drawable.button_pattern_running);
                                     readButton.setText( R.string.running_test );
+                                    handlerThread.update_display = true;
                                 }
                             }
                     });
@@ -493,6 +495,8 @@ public class UARTLoopbackActivity extends Activity {
 	/* usb input data handler */
 	private class handler_thread extends Thread {
 		Handler mHandler;
+                boolean update_display = false;
+                int byte_count = 0;
 
 		/* constructor */
 		handler_thread(Handler h) {
@@ -509,15 +513,17 @@ public class UARTLoopbackActivity extends Activity {
 				} catch (InterruptedException e) {
 				}
 
-				status = uartInterface.ReadData(4096, readBuffer,actualNumBytes);
+                                    if( update_display ) { 
+                                        status = uartInterface.ReadData(4096, readBuffer,actualNumBytes);
 
-//				Log.e(">>@@","actualNumBytes:"+actualNumBytes[0]);
-				
-				if (status == 0x00 && actualNumBytes[0] > 0) {
-					msg = mHandler.obtainMessage();
-					mHandler.sendMessage(msg);
-				}
-
+                                        //				Log.e(">>@@","actualNumBytes:"+actualNumBytes[0]);
+                                        
+                                        if (status == 0x00 && actualNumBytes[0] > 0) {
+                                            
+                                            msg = mHandler.obtainMessage();
+                                            mHandler.sendMessage(msg);
+                                        }
+                                    }
 			}
 		}
 	}
