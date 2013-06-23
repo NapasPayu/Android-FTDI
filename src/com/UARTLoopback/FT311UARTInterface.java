@@ -34,6 +34,7 @@ public class FT311UARTInterface extends Activity
 	public boolean mPermissionRequestPending = false;
 	public read_thread readThread;
         public Thread writeThread;
+        public write_runnable writeRun;
 
 
 	private byte [] read_usb_data; 
@@ -145,7 +146,7 @@ public class FT311UARTInterface extends Activity
 	}
 
         private class write_runnable implements Runnable { 
-                int counter;
+                public int counter = 0;
                 int numbytes = 256;
                 boolean running = true;
                 public write_runnable( int numseconds) { 
@@ -156,9 +157,7 @@ public class FT311UARTInterface extends Activity
                     Log.i(com.UARTLoopback.Globals.LOGSTR,"Starting write test");
                     while ( !Thread.currentThread().isInterrupted() && running ) { 
                         try {
-                            counter ++;
-                            for( int i = 0; i < 256; i ++ ) { 
-
+                            for( int i = 0; i < 256; i ++ , counter ++) { 
                                 write_usb_data[i] = (byte)i;
                             }
                             Thread.sleep(1);
@@ -178,11 +177,11 @@ public class FT311UARTInterface extends Activity
         public byte WriteTest(int numseconds )
         {
             byte status = 0x0;
-            int counter = 0;
 
             // writingThread = new Thread( new write_runnable() );
-            write_runnable runnable    = new write_runnable();
-            writeThread = new Thread( runnable  );
+            // write_runnable runnable    = new write_runnable();
+            writeRun = new write_runnable();            
+            writeThread = new Thread( writeRun  );
 
             Log.i(com.UARTLoopback.Globals.LOGSTR,"Long write test");
 
@@ -193,7 +192,9 @@ public class FT311UARTInterface extends Activity
             return status;
         }
 
-
+        public int getWriteTestNumBytes() {
+            return writeRun.counter;
+        }
 
         public void EndWriteTest() 
         {

@@ -217,11 +217,13 @@ public class UARTLoopbackActivity extends Activity {
                                     writing = false;
                                     writeButton.setText( R.string.write_test );
                                     uartInterface.EndWriteTest();
+                                    writeText.setText( "Bytes Written: " + uartInterface.getWriteTestNumBytes() );
                                 } else {
                                         writing = true;
                                         // First change the color of the Button
                                         writeButton.setBackgroundResource( R.drawable.button_pattern_running);
                                         writeButton.setText( R.string.running_test );
+                                        writeText.setText("");
                                         status = uartInterface.WriteTest(10);
                                 }
                         }
@@ -235,13 +237,18 @@ public class UARTLoopbackActivity extends Activity {
                                     readButton.setBackgroundResource( R.drawable.button_pattern);
                                     reading = false;
                                     readButton.setText( R.string.read_test );
-                                    handlerThread.update_display = false;
+                                    // handlerThread.update_display = false;
+                                    handlerThread.disableThread();
+                                    int tmpbyte_count = handlerThread.byte_count;
                                     handlerThread.byte_count = 0;
+                                    readText.setText("Bytes Read: " + tmpbyte_count );
                                 } else {
                                     reading = true;
                                     readButton.setBackgroundResource( R.drawable.button_pattern_running);
                                     readButton.setText( R.string.running_test );
-                                    handlerThread.update_display = true;
+                                    readText.setText("");
+                                    // handlerThread.update_display = true;
+                                    handlerThread.enableThread();
                                 }
                             }
                     });
@@ -502,6 +509,13 @@ public class UARTLoopbackActivity extends Activity {
 		handler_thread(Handler h) {
 			mHandler = h;
 		}
+                public void enableThread() {
+                    update_display = true;
+                }
+
+                public void disableThread() { 
+                    update_display = false;
+                }
 
 		public void run() {
 			Message msg;
@@ -519,7 +533,7 @@ public class UARTLoopbackActivity extends Activity {
                                         //				Log.e(">>@@","actualNumBytes:"+actualNumBytes[0]);
                                         
                                         if (status == 0x00 && actualNumBytes[0] > 0) {
-                                            
+                                            byte_count += actualNumBytes[0];
                                             msg = mHandler.obtainMessage();
                                             mHandler.sendMessage(msg);
                                         }
