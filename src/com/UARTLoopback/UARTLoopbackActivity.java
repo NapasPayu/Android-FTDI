@@ -46,6 +46,8 @@ public class UARTLoopbackActivity extends Activity {
 	char[] readBufferToChar;
 	int[] actualNumBytes;
 
+        int readBufferSize;
+
 	int numBytes;
 	byte count;
 	byte status;
@@ -71,11 +73,12 @@ public class UARTLoopbackActivity extends Activity {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
+                getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 		sharePrefSettings = getSharedPreferences("UARTLBPref", 0);
 		//cleanPreference();
 		/* create editable text objects */
 		readText = (EditText) findViewById(R.id.ReadValues);
-//		readText.setInputType(0);
+                //readText.setInputType(0);
 		//readText.setMovementMethod(ScrollingMovementMethod.getInstance());
 		writeText = (EditText) findViewById(R.id.WriteValues);
 		//writeText.setMovementMethod(ScrollingMovementMethod.getInstance());
@@ -91,10 +94,12 @@ public class UARTLoopbackActivity extends Activity {
 
 		originalDrawable = configButton.getBackground();
 
+                readBufferSize = 16384;
+
 		/* allocate buffer */
 		writeBuffer = new byte[64];
-		readBuffer = new byte[4096];
-		readBufferToChar = new char[4096]; 
+		readBuffer = new byte[readBufferSize];
+		readBufferToChar = new char[readBufferSize]; 
 		actualNumBytes = new int[1];
 
 		/* setup the baud rate list */
@@ -241,7 +246,8 @@ public class UARTLoopbackActivity extends Activity {
                                     handlerThread.disableThread();
                                     int tmpbyte_count = handlerThread.byte_count;
                                     handlerThread.byte_count = 0;
-                                    readText.setText("Bytes Read: " + tmpbyte_count );
+                                    readText.setText("Bytes Read: " + tmpbyte_count + " Failures: " + handlerThread.getFailureCount() );
+
                                 } else {
                                     reading = true;
                                     readButton.setBackgroundResource( R.drawable.button_pattern_running);
@@ -258,6 +264,7 @@ public class UARTLoopbackActivity extends Activity {
 		getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
 		
 		handlerThread = new handler_thread(handler);
+                handlerThread.setReadBufferSize( readBufferSize ) ;
 		handlerThread.start();
 
 	}
@@ -294,7 +301,7 @@ public class UARTLoopbackActivity extends Activity {
 		}
 		else{
 			bConfiged = false;
-        }
+                }
 		
 		baudRate = sharePrefSettings.getInt("baudRate", 9600);
 		stopBit = (byte)sharePrefSettings.getInt("stopBit", 1);
@@ -487,35 +494,66 @@ public class UARTLoopbackActivity extends Activity {
 
 
 	final Handler handler = new Handler() {
+                int reset_display_count = 0;
+                int failure_count = 0;
+                int prev_value = -1;
+
+                    
+                public int getFailureCount() {
+                    return failure_count;
+                }
+
 		@Override
 		public void handleMessage(Message msg) {
-			
+                    int cur_value;
+                    
 			for(int i=0; i<actualNumBytes[0]; i++)
 			{
 				readBufferToChar[i] = (char)readBuffer[i];
 			}
 			
 			readText.append(String.copyValueOf(readBufferToChar, 0, actualNumBytes[0]));
+                        reset_display_count += actualNumBytes[0];
+                        if( reset_display_count > 4096 ) {
+                            Log.d( com.UARTLoopback.Globals.LOGSTR ,"Resetting readText");
+                            readText.setText("");
+                            reset_display_count = 0;
+                        }
+
 		}
 	};
 
 	/* usb input data handler */
 	private class handler_thread extends Thread {
-		Handler mHandler;
+		public Handler mHandler;
                 boolean update_display = false;
                 int byte_count = 0;
+                int failure_count = 0;
+                int reset_display_count = 0;
+                public int readBufferSize = 4096;
+                int prev_value = -1;
 
 		/* constructor */
 		handler_thread(Handler h) {
 			mHandler = h;
 		}
+                public void setReadBufferSize(int size) {
+                    readBufferSize = size;
+                }
+                public int getReadBufferSize() { 
+                    return readBufferSize;
+                }
+
                 public void enableThread() {
                     update_display = true;
                 }
-
                 public void disableThread() { 
                     update_display = false;
                 }
+                public int getFailureCount() {
+                    return failure_count;
+                }
+
 
 		public void run() {
 			Message msg;
@@ -527,17 +565,40 @@ public class UARTLoopbackActivity extends Activity {
 				} catch (InterruptedException e) {
 				}
 
-                                    if( update_display ) { 
-                                        status = uartInterface.ReadData(4096, readBuffer,actualNumBytes);
+                                if( update_display ) { 
+                                    status = uartInterface.ReadData(readBufferSize, readBuffer,actualNumBytes);
 
-                                        //				Log.e(">>@@","actualNumBytes:"+actualNumBytes[0]);
+                                    Log.d( com.UARTLoopback.Globals.LOGSTR ,"actualNumBytes:"+actualNumBytes[0]);
+
+                                     int cur_value;
+                    
+                                     // for(int i=0; i<actualNumBytes[0]; i++)
+                                     // {
+                                     //     cur_value = (int)readBuffer[i];
+                                     //     if( prev_value == -1 ) { // no prev value
+                                     //         prev_value = (int)readBuffer[i];
+                                     //     } else {
+                                     //         if( ((prev_value + 1) % 256) != cur_value ) {
+                                     //             Log.e( com.UARTLoopback.Globals.LOGSTR, "Prev: " + (char)prev_value + " Expected: " + (char)((prev_value + 1) % 256) + "Got: " + (char)cur_value );
+                                     //             failure_count ++;
+                                     //         }
+                                     //         prev_value = cur_value;
+                                     //     }
+                                     // }
                                         
-                                        if (status == 0x00 && actualNumBytes[0] > 0) {
-                                            byte_count += actualNumBytes[0];
-                                            msg = mHandler.obtainMessage();
+                                    if (status == 0x00 && actualNumBytes[0] > 0) {
+                                        byte_count += actualNumBytes[0];
+
+                                        msg = mHandler.obtainMessage();
+                                            
+                                        // 1. first cut, try to reset the buffer occasionally
+                                        if( reset_display_count > 4096 || reset_display_count == 0 ) { 
                                             mHandler.sendMessage(msg);
                                         }
+                                        reset_display_count += actualNumBytes[0] % 4096;
+
                                     }
+                                }
 			}
 		}
 	}

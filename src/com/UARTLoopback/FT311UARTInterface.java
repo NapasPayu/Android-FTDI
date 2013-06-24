@@ -36,10 +36,19 @@ public class FT311UARTInterface extends Activity
         public Thread writeThread;
         public write_runnable writeRun;
 
-
+	final int  maxnumbytes = 262144; // 65536;
+        // private int readBufferSize  = maxnumbytes;
+        final private int readBufferSize = 32768;
+        // private int readBufferSize = 32768;
+        
 	private byte [] read_usb_data; 
 	private byte []	write_usb_data;
-	private byte  [] readBuffer; /*circular buffer*/
+
+
+	// private byte  [] readBuffer; /*circular buffer*/
+        // readBuffer = new byte [maxnumbytes];
+        private byte  []readBuffer = new byte [maxnumbytes];
+
 	private int readcount;
 	private int totalBytes;
 	private int writeIndex;
@@ -48,7 +57,7 @@ public class FT311UARTInterface extends Activity
         // private write_thread writing_test;
 
 
-	final int  maxnumbytes = 65536;
+
 
 	public boolean datareceived = false;
 	public boolean READ_ENABLE = false;
@@ -69,8 +78,13 @@ public class FT311UARTInterface extends Activity
 		global_context = context;
 		intsharePrefSettings = sharePrefSettings;
 		/*shall we start a thread here or what*/
+
+                // read_usb_data = new byte[readBufferSize];
+                // read_usb_data  = new byte[maxnumbytes];
 		read_usb_data = new byte[1024]; 
 		write_usb_data = new byte[256];
+
+
 		/*128(make it 256, but looks like bytes should be enough)*/
 		readBuffer = new byte [maxnumbytes];
 
@@ -450,7 +464,8 @@ public class FT311UARTInterface extends Activity
 	/*usb input data handler*/
 	private class read_thread  extends Thread {
 		FileInputStream instream;
-
+                int message_limiter = 0;
+                
 		read_thread(FileInputStream stream ){
 			instream = stream;
 			this.setPriority(Thread.MAX_PRIORITY);
@@ -458,16 +473,21 @@ public class FT311UARTInterface extends Activity
 
 		public void run() {		
 			while(READ_ENABLE == true) {
-				while(totalBytes > (maxnumbytes - 1024)) {
+				while(totalBytes > (maxnumbytes - readBufferSize)) {
 					try {
 						Thread.sleep(50);
+                                                Log.e(com.UARTLoopback.Globals.LOGSTR,"Shouldn't be here !");
 					}
 					catch (InterruptedException e) {e.printStackTrace();}
 				}
-
 				try {
                                     if (instream != null) {	
+
+                                        //                                        readcount = instream.read(read_usb_data,0,readBufferSize);
                                         readcount = instream.read(read_usb_data,0,1024);
+
+                                        Log.d( com.UARTLoopback.Globals.LOGSTR ,"Read count:" + readcount);
+
                                         if (readcount > 0) {
                                             for(int count = 0;count<readcount;count++) {					    			
                                                 readBuffer[writeIndex] = read_usb_data[count];
@@ -480,7 +500,7 @@ public class FT311UARTInterface extends Activity
                                             else
                                                 totalBytes = (maxnumbytes-readIndex)+writeIndex;
                                             
-                                            Log.e(">>@@","totalBytes:"+totalBytes);
+                                            Log.e(com.UARTLoopback.Globals.LOGSTR ,"totalBytes:"+totalBytes + " writeIndex:" + writeIndex);
                                         }
                                     }
 				}
