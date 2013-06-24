@@ -65,9 +65,11 @@ public class FT311UARTInterface extends Activity
 
 	public Context global_context;
 
-        public static String ManufacturerString = "mManufacturer=ACCES I/O Products, Inc.";
+        public static String ManufacturerString1 = "mManufacturer=ACCES I/O Products, Inc.";
+        public static String ManufacturerString2 = "mManufacturer=FTDI";
 	public static String ModelString1 = "mModel=ANDROID-232";
 	public static String ModelString2 = "mModel=Android Accessory FT311D";
+        public static String ModelString3 = "mModel=FTDIUARTDemo";
 	public static String VersionString = "mVersion=1.0";
 
 	public SharedPreferences intsharePrefSettings;
@@ -292,12 +294,17 @@ public class FT311UARTInterface extends Activity
 
 		UsbAccessory accessory = (accessories == null ? null : accessories[0]);
 		if (accessory != null) {
-			if ( -1 == accessory.toString().indexOf(ManufacturerString)) {
-				Toast.makeText(global_context, "Manufacturer is not matched!", Toast.LENGTH_SHORT).show();
-				return 1;
+			if (  accessory.toString().indexOf(ManufacturerString1) == -1  && 
+                              accessory.toString().indexOf(ManufacturerString2) == -1 
+                              ) {
+                            Toast.makeText(global_context, "Manufacturer is not matched!", Toast.LENGTH_SHORT).show();
+                            return 1;
 			}
 
-			if ( -1 == accessory.toString().indexOf(ModelString1) && -1 == accessory.toString().indexOf(ModelString2)) {
+			if ( accessory.toString().indexOf(ModelString1)  == -1 && 
+                             accessory.toString().indexOf(ModelString2)  == -1 && 
+                             accessory.toString().indexOf(ModelString3)  == -1 && 
+                             ) {
 				Toast.makeText(global_context, "Model is not matched!", Toast.LENGTH_SHORT).show();
 				return 1;
 			}
