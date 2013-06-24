@@ -65,9 +65,9 @@ public class FT311UARTInterface extends Activity
 
 	public Context global_context;
 
-	public static String ManufacturerString = "mManufacturer=FTDI";
-	public static String ModelString1 = "mModel=FTDIUARTDemo";
-	public static String ModelString2 = "mModel=Android Accessory FT312D";
+        public static String ManufacturerString = "mManufacturer=ACCES I/O Products, Inc.";
+	public static String ModelString1 = "mModel=ANDROID-232";
+	public static String ModelString2 = "mModel=Android Accessory FT311D";
 	public static String VersionString = "mVersion=1.0";
 
 	public SharedPreferences intsharePrefSettings;
