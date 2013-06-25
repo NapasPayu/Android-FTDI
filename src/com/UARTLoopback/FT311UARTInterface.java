@@ -303,7 +303,7 @@ public class FT311UARTInterface extends Activity
 
 			if ( accessory.toString().indexOf(ModelString1)  == -1 && 
                              accessory.toString().indexOf(ModelString2)  == -1 && 
-                             accessory.toString().indexOf(ModelString3)  == -1 && 
+                             accessory.toString().indexOf(ModelString3)  == -1
                              ) {
 				Toast.makeText(global_context, "Model is not matched!", Toast.LENGTH_SHORT).show();
 				return 1;
