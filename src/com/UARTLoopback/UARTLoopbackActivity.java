@@ -17,7 +17,9 @@ import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.Toast;
 import android.util.Log;
+import android.graphics.Color;
 import com.UARTLoopback.Globals;
+import android.text.Html;
 
 
 import com.UARTLoopback.R.drawable;
@@ -247,6 +249,7 @@ public class UARTLoopbackActivity extends Activity {
                                     int tmpbyte_count = handlerThread.byte_count;
                                     handlerThread.byte_count = 0;
                                     readText.setText("Bytes Read: " + tmpbyte_count + " Failures: " + handlerThread.getFailureCount() );
+                                    handlerThread.setFailureCount(0);
 
                                 } else {
                                     reading = true;
@@ -492,8 +495,13 @@ public class UARTLoopbackActivity extends Activity {
 		super.onDestroy();
 	}
 
+        public class TmpHandler extends Handler {
+                public void errorMessage( String errmsg ) {
+                }
+        }
 
-	final Handler handler = new Handler() {
+
+	final TmpHandler handler = new TmpHandler() {
                 int reset_display_count = 0;
                 int failure_count = 0;
                 int prev_value = -1;
@@ -503,29 +511,42 @@ public class UARTLoopbackActivity extends Activity {
                     return failure_count;
                 }
 
+                public void setFailureCount(int val ) { 
+                        failure_count = val;
+                }
+
 		@Override
 		public void handleMessage(Message msg) {
-                    int cur_value;
-                    
-			for(int i=0; i<actualNumBytes[0]; i++)
-			{
-				readBufferToChar[i] = (char)readBuffer[i];
-			}
-			
-			readText.append(String.copyValueOf(readBufferToChar, 0, actualNumBytes[0]));
-                        reset_display_count += actualNumBytes[0];
-                        if( reset_display_count > 4096 ) {
-                            Log.d( com.UARTLoopback.Globals.LOGSTR ,"Resetting readText");
-                            readText.setText("");
-                            reset_display_count = 0;
-                        }
+                        int cur_value;
+                        Bundle bundle = msg.getData();
 
+                        if( "error".equals( bundle.getString("MessageType") ) ) {
+                            String errmsg = bundle.getString("Message");
+                            Log.d( com.UARTLoopback.Globals.LOGSTR ,"Detected error message" + errmsg );
+
+                            readText.setText("");
+                            readText.append( Html.fromHtml("<font COLOR=\"RED\"><b>" + errmsg + "</b></font>" ));
+                            reset_display_count = 0;
+                        } else {
+                            for(int i=0; i<actualNumBytes[0]; i++)
+                                {
+                                    readBufferToChar[i] = (char)readBuffer[i];
+                                }
+                            
+                            readText.append(String.copyValueOf(readBufferToChar, 0, actualNumBytes[0]));
+                            reset_display_count += actualNumBytes[0];
+                            if( reset_display_count > 4096 ) {
+                                Log.d( com.UARTLoopback.Globals.LOGSTR ,"Resetting readText");
+                                readText.setText("");
+                                reset_display_count = 0;
+                            }
+                        }
 		}
 	};
 
 	/* usb input data handler */
 	private class handler_thread extends Thread {
-		public Handler mHandler;
+		public TmpHandler mHandler;
                 boolean update_display = false;
                 int byte_count = 0;
                 int failure_count = 0;
@@ -534,7 +555,7 @@ public class UARTLoopbackActivity extends Activity {
                 int prev_value = -1;
 
 		/* constructor */
-		handler_thread(Handler h) {
+		handler_thread(TmpHandler h) {
 			mHandler = h;
 		}
                 public void setReadBufferSize(int size) {
@@ -553,7 +574,9 @@ public class UARTLoopbackActivity extends Activity {
                 public int getFailureCount() {
                     return failure_count;
                 }
-
+                public void setFailureCount(int val) {
+                    failure_count = val;
+                }
 
 		public void run() {
 			Message msg;
@@ -572,19 +595,27 @@ public class UARTLoopbackActivity extends Activity {
 
                                      int cur_value;
                     
-                                     // for(int i=0; i<actualNumBytes[0]; i++)
-                                     // {
-                                     //     cur_value = (int)readBuffer[i];
-                                     //     if( prev_value == -1 ) { // no prev value
-                                     //         prev_value = (int)readBuffer[i];
-                                     //     } else {
-                                     //         if( ((prev_value + 1) % 256) != cur_value ) {
-                                     //             Log.e( com.UARTLoopback.Globals.LOGSTR, "Prev: " + (char)prev_value + " Expected: " + (char)((prev_value + 1) % 256) + "Got: " + (char)cur_value );
-                                     //             failure_count ++;
-                                     //         }
-                                     //         prev_value = cur_value;
-                                     //     }
-                                     // }
+                                     for(int i=0; i<actualNumBytes[0]; i++)
+                                     {
+                                         cur_value = (int)readBuffer[i];
+                                         if( prev_value == -1 ) { // no prev value
+                                             prev_value = (int)readBuffer[i];
+                                         } else {
+                                             if( ((prev_value + 1) % 257) != cur_value ) {
+                                                 String errmsg = "Prev: " + (char)prev_value + " Expected: " + (char)((prev_value + 1) % 257) + "Got: " + (char)cur_value;
+                                                 Log.e( com.UARTLoopback.Globals.LOGSTR, errmsg );
+                                                 // mHandler.errorMessage( errmsg );
+                                                 msg = mHandler.obtainMessage();
+                                                 Bundle bundle = new Bundle();
+                                                 bundle.putString("MessageType", "error" );
+                                                 bundle.putString("Message", errmsg );
+                                                 msg.setData( bundle );
+                                                 mHandler.sendMessage( msg );
+                                                 failure_count ++;
+                                             }
+                                             prev_value = cur_value;
+                                         }
+                                     }
                                         
                                     if (status == 0x00 && actualNumBytes[0] > 0) {
                                         byte_count += actualNumBytes[0];

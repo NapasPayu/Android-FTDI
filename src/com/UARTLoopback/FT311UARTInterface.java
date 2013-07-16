@@ -2,6 +2,8 @@
 package com.UARTLoopback; 
 import java.io.FileDescriptor;
 import java.io.FileInputStream;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
@@ -31,6 +33,9 @@ public class FT311UARTInterface extends Activity
 	public ParcelFileDescriptor filedescriptor = null;
 	public FileInputStream inputstream = null;
 	public FileOutputStream outputstream = null;
+        
+
+
 	public boolean mPermissionRequestPending = false;
 	public read_thread readThread;
         public Thread writeThread;
@@ -165,27 +170,34 @@ public class FT311UARTInterface extends Activity
                 public int counter = 0;
                 int numbytes = 256;
                 boolean running = true;
+                private final String logPrefix = "WriteThread:";
                 public write_runnable( int numseconds) { 
                 }
                 public write_runnable() { 
                 }
+                public void endRun() {
+                    Log.i(com.UARTLoopback.Globals.LOGSTR+logPrefix,"Write thread, switching off running");
+                    running = false;
+                }
                 public void run() { 
-                    Log.i(com.UARTLoopback.Globals.LOGSTR,"Starting write test");
-                    while ( !Thread.currentThread().isInterrupted() && running ) { 
-                        try {
+                    Log.i(com.UARTLoopback.Globals.LOGSTR+logPrefix,"Starting write test");
+                    // while ( !Thread.currentThread().isInterrupted() && running ) { 
+                    while( running ) { 
+                            Log.i(com.UARTLoopback.Globals.LOGSTR+logPrefix,"Inside of running loop");
+                        // try {
                             for( int i = 0; i < 256; i ++ , counter ++) { 
                                 write_usb_data[i] = (byte)i;
                             }
-                            Thread.sleep(1);
+                            // Thread.sleep(1);
                             SendPacket(numbytes);
-                            Log.i(com.UARTLoopback.Globals.LOGSTR,"After writing bytes");
-
-                        } catch (InterruptedException e) {
-                            System.out.println("Exception" +  e);
-                            running = false;
-                        }
+                            Log.i(com.UARTLoopback.Globals.LOGSTR+logPrefix,"After writing bytes");
+                        // }
+                        // catch (InterruptedException e) {
+                        //         Log.e(com.UARTLoopback.Globals.LOGSTR+logPrefix,"Exception in write thread" +  e);
+                        //         running = false;
+                        // }
                     }
-                    Log.i(com.UARTLoopback.Globals.LOGSTR,"Thread is done...");
+                    Log.i(com.UARTLoopback.Globals.LOGSTR+logPrefix,"Thread is done...");
                 }
         }
 
@@ -194,8 +206,6 @@ public class FT311UARTInterface extends Activity
         {
             byte status = 0x0;
 
-            // writingThread = new Thread( new write_runnable() );
-            // write_runnable runnable    = new write_runnable();
             writeRun = new write_runnable();            
             writeThread = new Thread( writeRun  );
 
@@ -216,9 +226,11 @@ public class FT311UARTInterface extends Activity
         {
             Log.i(com.UARTLoopback.Globals.LOGSTR,"Signaling for the thread to end");
             try {
-                writeThread.interrupt();
-                Log.i(com.UARTLoopback.Globals.LOGSTR,"Waiting for the thread to terminate");
-                writeThread.join();
+                    writeRun.endRun();
+                    writeThread.interrupt();
+                    Log.i(com.UARTLoopback.Globals.LOGSTR,"Waiting for the thread to terminate");
+                    writeThread.join();
+                    Log.i(com.UARTLoopback.Globals.LOGSTR,"Write thread has terminated");
             } catch ( InterruptedException e ) {
                 System.out.println("Error: " + e );
             }
@@ -266,7 +278,10 @@ public class FT311UARTInterface extends Activity
 	{	
 		try {
 			if (outputstream != null){
+                                Log.d(com.UARTLoopback.Globals.LOGSTR, "Sending packet of size: " + numBytes );
 				outputstream.write(write_usb_data, 0,numBytes);
+                                Log.d(com.UARTLoopback.Globals.LOGSTR, "Completed sending packet" );
+                                                            
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -284,10 +299,12 @@ public class FT311UARTInterface extends Activity
 		UsbAccessory[] accessories = usbmanager.getAccessoryList();
 		if (accessories != null) {
 			Toast.makeText(global_context, "Accessory Attached", Toast.LENGTH_SHORT).show();
+                        Log.e(com.UARTLoopback.Globals.LOGSTR, "Accessory is attached");
 		}
 		else {
 			// return 2 for accessory detached case
 			//Log.e(">>@@","ResumeAccessory RETURN 2 (accessories == null)");
+                        Log.e(com.UARTLoopback.Globals.LOGSTR, "Accessory is not attached");
 			accessory_attached = false;
 			return 2;
 		}
@@ -298,6 +315,7 @@ public class FT311UARTInterface extends Activity
                               accessory.toString().indexOf(ManufacturerString2) == -1 
                               ) {
                             Toast.makeText(global_context, "Manufacturer is not matched!", Toast.LENGTH_SHORT).show();
+                            Log.e(com.UARTLoopback.Globals.LOGSTR, "Manufacturer is not matched!");
                             return 1;
 			}
 
@@ -306,15 +324,18 @@ public class FT311UARTInterface extends Activity
                              accessory.toString().indexOf(ModelString3)  == -1
                              ) {
 				Toast.makeText(global_context, "Model is not matched!", Toast.LENGTH_SHORT).show();
+                                Log.e(com.UARTLoopback.Globals.LOGSTR, "Model is not matched!");
 				return 1;
 			}
 
 			if ( -1 == accessory.toString().indexOf(VersionString)) {
 				Toast.makeText(global_context, "Version is not matched!", Toast.LENGTH_SHORT).show();
+                                Log.e(com.UARTLoopback.Globals.LOGSTR, "Version is not matched!");
 				return 1;
 			}
 
 			Toast.makeText(global_context, "Manufacturer, Model & Version are matched!", Toast.LENGTH_SHORT).show();
+                        Log.i(com.UARTLoopback.Globals.LOGSTR, "Manufacturer, Model & Version are matched!");
 			accessory_attached = true;
 
 			if (usbmanager.hasPermission(accessory)) {
@@ -323,8 +344,8 @@ public class FT311UARTInterface extends Activity
 				synchronized (mUsbReceiver) {
 					if (!mPermissionRequestPending) {
 						Toast.makeText(global_context, "Request USB Permission", Toast.LENGTH_SHORT).show();
-						usbmanager.requestPermission(accessory,
-								mPermissionIntent);
+                                                Log.i(com.UARTLoopback.Globals.LOGSTR, "Request USB Permission");
+						usbmanager.requestPermission(accessory, mPermissionIntent);
 						mPermissionRequestPending = true;
 					}
 				}
@@ -490,7 +511,9 @@ public class FT311UARTInterface extends Activity
 				try {
                                     if (instream != null) {	
 
-                                        //                                        readcount = instream.read(read_usb_data,0,readBufferSize);
+                                        //readcount = instream.read(read_usb_data,0,readBufferSize)
+                                        Log.d( com.UARTLoopback.Globals.LOGSTR ,"About to read");
+
                                         readcount = instream.read(read_usb_data,0,1024);
 
                                         Log.d( com.UARTLoopback.Globals.LOGSTR ,"Read count:" + readcount);
