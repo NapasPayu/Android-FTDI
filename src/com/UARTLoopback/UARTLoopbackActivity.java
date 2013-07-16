@@ -269,7 +269,7 @@ public class UARTLoopbackActivity extends Activity {
 
 		getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
 		
-		handlerThread = new handler_thread(handler);
+		handlerThread = new handler_thread(handler, 256 );
                 handlerThread.setReadBufferSize( readBufferSize ) ;
 		handlerThread.start();
 
@@ -556,9 +556,10 @@ public class UARTLoopbackActivity extends Activity {
                 int reset_display_count = 0;
                 public int readBufferSize = 4096;
                 int prev_value = -1;
+                int reset_value = 256;
 
 		/* constructor */
-		handler_thread(TmpHandler h) {
+		handler_thread(TmpHandler h, int rvalue ) {
 			mHandler = h;
 		}
                 public void setReadBufferSize(int size) {
@@ -604,8 +605,8 @@ public class UARTLoopbackActivity extends Activity {
                                          if( prev_value == -1 ) { // no prev value
                                              prev_value = (int)readBuffer[i];
                                          } else {
-                                             if( ((prev_value + 1) % 257) != cur_value ) {
-                                                 String errmsg = "Prev: " + (char)prev_value + " Expected: '" + (char)((prev_value + 1) % 257) + "' Got: '" + (char)cur_value + "'";
+                                             if( ((prev_value + 1) % reset_value) != cur_value ) {
+                                                 String errmsg = "Prev: " + (char)prev_value + " Expected: '" + (char)((prev_value + 1) % reset_value) + "' Got: '" + (char)cur_value + "'";
                                                  Log.e( com.UARTLoopback.Globals.LOGSTR, errmsg );
                                                  // mHandler.errorMessage( errmsg );
                                                  msg = mHandler.obtainMessage();
