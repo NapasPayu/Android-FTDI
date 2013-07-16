@@ -20,9 +20,10 @@ import android.util.Log;
 import android.graphics.Color;
 import com.UARTLoopback.Globals;
 import android.text.Html;
-
+import java.math.*;
 
 import com.UARTLoopback.R.drawable;
+
 
 public class UARTLoopbackActivity extends Activity {
 
@@ -601,12 +602,12 @@ public class UARTLoopbackActivity extends Activity {
                     
                                      for(int i=0; i<actualNumBytes[0]; i++)
                                      {
-                                         cur_value = (int)readBuffer[i];
+                                         cur_value = ((int)readBuffer[i] & 0xFF );
                                          if( prev_value == -1 ) { // no prev value
-                                             prev_value = (int)readBuffer[i];
+                                             prev_value = ((int)readBuffer[i] & 0xFF );
                                          } else {
                                              if( ((prev_value + 1) % reset_value) != cur_value ) {
-                                                 String errmsg = "Prev: " + (char)prev_value + " Expected: '" + (char)((prev_value + 1) % reset_value) + "' Got: '" + (char)cur_value + "'";
+                                                 String errmsg = "Prev: " + prev_value + " Expected: '" +  ((prev_value + 1) % reset_value) + "' Got: '" + cur_value + "'";
                                                  Log.e( com.UARTLoopback.Globals.LOGSTR, errmsg );
                                                  // mHandler.errorMessage( errmsg );
                                                  msg = mHandler.obtainMessage();
