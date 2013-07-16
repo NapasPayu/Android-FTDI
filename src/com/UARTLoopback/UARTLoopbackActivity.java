@@ -248,7 +248,10 @@ public class UARTLoopbackActivity extends Activity {
                                     handlerThread.disableThread();
                                     int tmpbyte_count = handlerThread.byte_count;
                                     handlerThread.byte_count = 0;
-                                    readText.setText("Bytes Read: " + tmpbyte_count + " Failures: " + handlerThread.getFailureCount() );
+                                    String color = ( handlerThread.getFailureCount() > 0 ? "RED" : "WHITE" );
+                                    readText.setText( Html.fromHtml("Bytes Read: " + tmpbyte_count + 
+                                                                    " Failures: <font COLOR=\"" + color + "\"><b>" + 
+                                                                    handlerThread.getFailureCount() + "</b></font>" ) );
                                     handlerThread.setFailureCount(0);
 
                                 } else {
@@ -602,7 +605,7 @@ public class UARTLoopbackActivity extends Activity {
                                              prev_value = (int)readBuffer[i];
                                          } else {
                                              if( ((prev_value + 1) % 257) != cur_value ) {
-                                                 String errmsg = "Prev: " + (char)prev_value + " Expected: " + (char)((prev_value + 1) % 257) + "Got: " + (char)cur_value;
+                                                 String errmsg = "Prev: " + (char)prev_value + " Expected: '" + (char)((prev_value + 1) % 257) + "' Got: '" + (char)cur_value + "'";
                                                  Log.e( com.UARTLoopback.Globals.LOGSTR, errmsg );
                                                  // mHandler.errorMessage( errmsg );
                                                  msg = mHandler.obtainMessage();
