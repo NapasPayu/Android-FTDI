@@ -224,6 +224,9 @@ public class UARTLoopbackActivity extends Activity {
                                     writeButton.setBackgroundResource( R.drawable.button_pattern);
                                     writing = false;
                                     writeButton.setText( R.string.write_test );
+                                    Log.d( com.UARTLoopback.Globals.LOGSTR ,"Trying to stop write test" );
+                                    // This method needs to be rewritten to actually
+                                    // timeout and end the runnable
                                     uartInterface.EndWriteTest();
                                     writeText.setText( "Bytes Written: " + uartInterface.getWriteTestNumBytes() );
                                 } else {

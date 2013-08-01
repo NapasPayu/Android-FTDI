@@ -7,6 +7,10 @@ import java.io.InputStreamReader;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
+// import java.util.concurrent.Callable;
+// import java.util.concurrent.Future;
+import java.util.concurrent.*;
+
 import android.app.Activity;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
@@ -166,19 +170,56 @@ public class FT311UARTInterface extends Activity
 		return status;
 	}
 
+
+
+
         private class write_runnable implements Runnable { 
                 public int counter = 0;
                 int numbytes = 256;
                 boolean running = true;
                 private final String logPrefix = "WriteThread:";
-                public write_runnable( int numseconds) { 
+                ExecutorService executor;
+
+                public class NonBlockingFTDIWriter implements Callable<Integer> {
+                        public int numbytes;
+                        public NonBlockingFTDIWriter() {
+                            numbytes = 1;
+                        }
+                        public void setNumbytes( int num ) {
+                            numbytes = num;
+                        }
+                        public int getNumbytes() {
+                            return numbytes;
+                        }
+                        public Integer call() throws Exception { 
+                            SendPacket( numbytes );
+                            numbytes = 0;
+                            return numbytes;
+                        }
                 }
+
+                NonBlockingFTDIWriter writeFTDI;
+
+                // public write_runnable( int numseconds ) { 
+                //     writeFTDI = new Callable<Integer>() {
+                //         @Override
+                //         public Integer call() throws Exception {
+                //             SendPacket( 
+                //         }
+                //     }
+
                 public write_runnable() { 
+                    writeFTDI = new NonBlockingFTDIWriter();
+                    executor = Executors.newFixedThreadPool(2);
+
                 }
                 public void endRun() {
                     Log.i(com.UARTLoopback.Globals.LOGSTR+logPrefix,"Write thread, switching off running");
                     running = false;
                 }
+
+
+
                 public void run() { 
                     Log.i(com.UARTLoopback.Globals.LOGSTR+logPrefix,"Starting write test");
                     // while ( !Thread.currentThread().isInterrupted() && running ) { 
@@ -188,14 +229,25 @@ public class FT311UARTInterface extends Activity
                             for( int i = 0; i < 256; i ++ , counter ++) { 
                                 write_usb_data[i] = (byte)i;
                             }
-                            // Thread.sleep(1);
-                            SendPacket(numbytes);
+
+                            // Need to SendPacket with a timeout 
+                            // In case the receiver isn't listening
+                            // SendPacket(numbytes);
+                            // New system
+                            try { 
+                                Future<Integer> future = executor.submit( writeFTDI );
+                                Integer tmp = future.get(5000, TimeUnit.MILLISECONDS);
+                            } catch (InterruptedException e ) {
+                                Log.e(com.UARTLoopback.Globals.LOGSTR+logPrefix,"Write timeout");
+                            } catch( TimeoutException e ) {
+                                Log.e(com.UARTLoopback.Globals.LOGSTR+logPrefix,"Interrupted exception");
+                            } catch( ExecutionException e ) {
+                                Log.e(com.UARTLoopback.Globals.LOGSTR+logPrefix,"Execution exception");
+                            }
+
+                            // writeFTDI.setNumbytes( numbytes );
+
                             Log.i(com.UARTLoopback.Globals.LOGSTR+logPrefix,"After writing bytes");
-                        // }
-                        // catch (InterruptedException e) {
-                        //         Log.e(com.UARTLoopback.Globals.LOGSTR+logPrefix,"Exception in write thread" +  e);
-                        //         running = false;
-                        // }
                     }
                     Log.i(com.UARTLoopback.Globals.LOGSTR+logPrefix,"Thread is done...");
                 }
