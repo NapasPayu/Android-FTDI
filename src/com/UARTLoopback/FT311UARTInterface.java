@@ -192,6 +192,7 @@ public class FT311UARTInterface extends Activity
                             return numbytes;
                         }
                         public Integer call() throws Exception { 
+                            Log.e(com.UARTLoopback.Globals.LOGSTR+logPrefix,"Callable Sending packet");
                             SendPacket( numbytes );
                             numbytes = 0;
                             return numbytes;
@@ -229,6 +230,7 @@ public class FT311UARTInterface extends Activity
                             for( int i = 0; i < 256; i ++ , counter ++) { 
                                 write_usb_data[i] = (byte)i;
                             }
+                            writeFTDI.setNumbytes( 256 );
 
                             // Need to SendPacket with a timeout 
                             // In case the receiver isn't listening
@@ -236,6 +238,7 @@ public class FT311UARTInterface extends Activity
                             // New system
                             try { 
                                 Future<Integer> future = executor.submit( writeFTDI );
+                                Log.e(com.UARTLoopback.Globals.LOGSTR+logPrefix,"Invoking Future");
                                 Integer tmp = future.get(5000, TimeUnit.MILLISECONDS);
                             } catch (InterruptedException e ) {
                                 Log.e(com.UARTLoopback.Globals.LOGSTR+logPrefix,"Write timeout");
@@ -244,8 +247,6 @@ public class FT311UARTInterface extends Activity
                             } catch( ExecutionException e ) {
                                 Log.e(com.UARTLoopback.Globals.LOGSTR+logPrefix,"Execution exception");
                             }
-
-                            // writeFTDI.setNumbytes( numbytes );
 
                             Log.i(com.UARTLoopback.Globals.LOGSTR+logPrefix,"After writing bytes");
                     }
